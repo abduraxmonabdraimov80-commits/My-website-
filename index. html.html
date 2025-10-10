@@ -1,0 +1,423 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abduraxmon Abdraimov - Siyosatshunos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        /* Navigation */
+        nav {
+            background: #fff;
+            padding: 1.5rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        nav .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #555;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: #3498db;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 150px 2rem 100px;
+            text-align: center;
+            margin-top: 70px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            animation: fadeInUp 1s;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+        }
+
+        .hero .cta-button {
+            background: white;
+            color: #667eea;
+            padding: 1rem 2.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .hero .cta-button:hover {
+            transform: translateY(-3px);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        /* Section */
+        section {
+            padding: 80px 2rem;
+        }
+
+        section h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #2c3e50;
+        }
+
+        /* About Section */
+        .about {
+            background: white;
+        }
+
+        .about-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        /* Skills Section */
+        .skills {
+            background: #f8f9fa;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .skill-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .skill-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        .skill-card h3 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+
+        /* Experience Section */
+        .experience {
+            background: white;
+        }
+
+        .timeline {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .timeline-item {
+            padding: 2rem;
+            background: #f8f9fa;
+            margin-bottom: 2rem;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+        }
+
+        .timeline-item h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .timeline-item .date {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        /* Contact Section */
+        .contact {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .contact h2 {
+            color: white;
+        }
+
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .contact-item {
+            font-size: 1.1rem;
+        }
+
+        .contact-item a {
+            color: white;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .contact-item a:hover {
+            border-bottom-color: white;
+        }
+
+        /* Footer */
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav ul {
+                gap: 1rem;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            section h2 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container">
+            <div class="logo">Abduraxmon.uz</div>
+            <ul>
+                <li><a href="#bosh">Bosh sahifa</a></li>
+                <li><a href="#haqida">Haqimda</a></li>
+                <li><a href="#konikma">Ko'nikmalar</a></li>
+                <li><a href="#tajriba">Tajriba</a></li>
+                <li><a href="#aloqa">Aloqa</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero" id="bosh">
+        <h1>Abduraxmon Abdraimov</h1>
+        <p>Siyosatshunos | Tahlilchi | Tadqiqotchi</p>
+        <a href="#aloqa" class="cta-button">Bog'lanish</a>
+    </section>
+
+    <!-- About Section -->
+    <section class="about" id="haqida">
+        <div class="container">
+            <h2>Haqimda</h2>
+            <div class="about-content">
+                <p>Men siyosiy jarayonlar va xalqaro munosabatlar sohasida chuqur bilimga ega mutaxassisман. 
+                Siyosiy tahlil, tadqiqot metodologiyasi va strategik fikrlashga ixtisoslashganman. 
+                Maqsadim - murakkab siyosiy hodisalarni oddiy va tushunarli tilda tushuntirishdir.</p>
+                <p style="margin-top: 1rem;">Professional faoliyatim davomida turli loyihalar ustida ishlagan va 
+                siyosat sohasida amaliy tajriba to'plagan mutaxassisман.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section class="skills" id="konikma">
+        <div class="container">
+            <h2>Ko'nikmalar</h2>
+            <div class="skills-grid">
+                <div class="skill-card">
+                    <h3>📊 Siyosiy Tahlil</h3>
+                    <p>Siyosiy jarayonlarni chuqur tahlil qilish va prognozlash</p>
+                </div>
+                <div class="skill-card">
+                    <h3>🔍 Tadqiqot</h3>
+                    <p>Ilmiy tadqiqot metodologiyasi va ma'lumotlar tahlili</p>
+                </div>
+                <div class="skill-card">
+                    <h3>✍️ Maqola Yozish</h3>
+                    <p>Akademik va jurnalistik maqolalar tayyorlash</p>
+                </div>
+                <div class="skill-card">
+                    <h3>🌐 Tillar</h3>
+                    <p>O'zbek, Rus, Ingliz tillarida erkin muloqot</p>
+                </div>
+                <div class="skill-card">
+                    <h3>📢 Ommaviy So'zlash</h3>
+                    <p>Prezentatsiyalar va nutqlar tayyorlash</p>
+                </div>
+                <div class="skill-card">
+                    <h3>🤝 Hamkorlik</h3>
+                    <p>Xalqaro tashkilotlar bilan ish olib borish</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Experience Section -->
+    <section class="experience" id="tajriba">
+        <div class="container">
+            <h2>Tajriba va Ta'lim</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <h3>Siyosatshunoslik yo'nalishi</h3>
+                    <div class="date">2020 - Hozir</div>
+                    <p>Siyosiy jarayonlar, xalqaro munosabatlar va demokratiya masalalari ustida ishlamoqda.</p>
+                </div>
+                <div class="timeline-item">
+                    <h3>Tadqiqot loyihalari</h3>
+                    <div class="date">2021 - 2024</div>
+                    <p>Turli tadqiqot loyihalarida ishtirok etish va siyosiy tahlillar tayyorlash.</p>
+                </div>
+                <div class="timeline-item">
+                    <h3>Nashrlar va maqolalar</h3>
+                    <div class="date">Doimiy</div>
+                    <p>Siyosiy masalalar bo'yicha maqolalar va tahliliy materiallar nashr etish.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="aloqa">
+        <div class="container">
+            <h2>Bog'lanish</h2>
+            <p style="margin-bottom: 2rem;">Hamkorlik va savollaringiz uchun men bilan bog'laning</p>
+            <div class="contact-info">
+                <div class="contact-item">
+                    📧 <a href="mailto:info@abduraxmon.uz">info@abduraxmon.uz</a>
+                </div>
+                <div class="contact-item">
+                    📱 <a href="tel:+998901234567">+998 (90) 123-45-67</a>
+                </div>
+                <div class="contact-item">
+                    💼 <a href="https://linkedin.com" target="_blank">LinkedIn</a>
+                </div>
+                <div class="contact-item">
+                    ✈️ <a href="https://t.me/abduraxmon" target="_blank">Telegram</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2025 Abduraxmon Abdraimov. Barcha huquqlar himoyalangan.</p>
+    </footer>
+
+    <script>
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Scroll animation
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animation = 'fadeInUp 1s forwards';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.skill-card, .timeline-item').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
