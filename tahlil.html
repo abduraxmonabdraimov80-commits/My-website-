@@ -1,0 +1,731 @@
+import React, { useState, useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { FileText, TrendingUp, Search, BookOpen, MessageSquare, Heart, Frown, Meh, Smile, Target, Lightbulb, Zap } from 'lucide-react';
+
+const PoliticalTextAnalyzer = () => {
+  const [text, setText] = useState('');
+  const [analyzed, setAnalyzed] = useState(false);
+  const [activeView, setActiveView] = useState('home');
+  const [activeTheory, setActiveTheory] = useState('ngram');
+
+  // Stop words ro'yxati (bog'lovchilar)
+  const stopWords = new Set([
+    'va', 'bilan', 'uchun', 'yoki', 'lekin', 'ammo', 'chunki', 
+    'agar', 'ham', 'hali', 'hech', 'eng', 'juda', 'ana', 'mana',
+    'bu', 'shu', 'o\'sha', 'u', 'bir', 'ikki', 'uch'
+  ]);
+
+  // Hissiy so'zlar lug'ati
+  const sentimentWords = {
+    positive: ['yaxshi', 'ajoyib', 'mukammal', 'muvaffaqiyat', 'taraqqiyot', 'rivojlanish', 'farovonlik', 
+               'o\'sish', 'yutuq', 'kuchli', 'mustahkam', 'tinchlik', 'osoyishta', 'erkin', 'demokratik',
+               'yuksak', 'yetakchi', 'ilg\'or', 'zamonaviy', 'innovatsion', 'samarali'],
+    negative: ['yomon', 'qiyin', 'muammo', 'inqiroz', 'tanazzul', 'pasayish', 'zaif', 'kambag\'al',
+               'xavf', 'tahdid', 'zulm', 'nadolat', 'korrupsiya', 'qarzdorlik', 'ishsizlik'],
+    neutral: ['holat', 'vaziyat', 'jarayon', 'dastur', 'reja', 'loyiha', 'tizim', 'tartib']
+  };
+
+  // Ritorik elementlar
+  const rhetoricalPatterns = {
+    appeal: ['hurmatli', 'aziz', 'qadrdon', 'muhterem', 'do\'stlar', 'vatandoshlar', 'xalq', 'millat'],
+    repetition: [], // dinamik hisoblanadi
+    question: ['nima', 'qanday', 'qachon', 'qayerda', 'kim', 'nega']
+  };
+
+  // Metafora va ramziy so'zlar
+  const symbolicWords = {
+    metaphors: ['yo\'l', 'ko\'prik', 'tosh', 'qal\'a', 'nur', 'yorug\'lik', 'tun', 'quyosh', 
+                'daryo', 'tog\'', 'meva', 'urug\'', 'gullab-yashnash', 'ravnaq'],
+    symbols: ['bayroq', 'gerb', 'madhiya', 'ona', 'vatan', 'mustaqillik', 'erkinlik', 'adolat']
+  };
+
+  const cleanText = (text) => {
+    return text
+      .toLowerCase()
+      .replace(/[.,!?;:()"'«»—–\-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
+
+  const generateNGrams = (words, n) => {
+    const ngrams = {};
+    for (let i = 0; i <= words.length - n; i++) {
+      const ngram = words.slice(i, i + n).join(' ');
+      // Stop words ni hisobga olish
+      const hasStopWord = words.slice(i, i + n).some(w => stopWords.has(w));
+      if (!hasStopWord || n > 1) {
+        ngrams[ngram] = (ngrams[ngram] || 0) + 1;
+      }
+    }
+    return ngrams;
+  };
+
+  // Sentiment tahlili
+  const analyzeSentiment = (words) => {
+    let positive = 0, negative = 0, neutral = 0;
+    
+    words.forEach(word => {
+      if (sentimentWords.positive.some(pw => word.includes(pw))) positive++;
+      else if (sentimentWords.negative.some(nw => word.includes(nw))) negative++;
+      else if (sentimentWords.neutral.some(nw => word.includes(nw))) neutral++;
+    });
+
+    const total = positive + negative + neutral || 1;
+    return {
+      positive: Math.round((positive / total) * 100),
+      negative: Math.round((negative / total) * 100),
+      neutral: Math.round((neutral / total) * 100),
+      counts: { positive, negative, neutral }
+    };
+  };
+
+  // Frame tahlili
+  const analyzeFraming = (text, words) => {
+    const frames = {
+      economic: 0,
+      social: 0,
+      security: 0,
+      progress: 0
+    };
+
+    const frameKeywords = {
+      economic: ['iqtisod', 'moliya', 'investitsiya', 'savdo', 'ishlab chiqarish', 'eksport', 'bank', 'pul'],
+      social: ['jamiyat', 'xalq', 'oila', 'ta\'lim', 'sog\'liq', 'madaniyat', 'yoshlar'],
+      security: ['xavfsizlik', 'himoya', 'mudofaa', 'tinchlik', 'barqarorlik', 'tartib'],
+      progress: ['rivojlanish', 'taraqqiyot', 'o\'sish', 'innovatsiya', 'zamonaviy', 'ilg\'or']
+    };
+
+    words.forEach(word => {
+      Object.keys(frameKeywords).forEach(frame => {
+        if (frameKeywords[frame].some(kw => word.includes(kw))) {
+          frames[frame]++;
+        }
+      });
+    });
+
+    return frames;
+  };
+
+  // Ritorik tahlil
+  const analyzeRhetoric = (text, words) => {
+    const rhetoric = {
+      appeals: 0,
+      questions: 0,
+      repetitions: 0
+    };
+
+    // Murojaat
+    words.forEach(word => {
+      if (rhetoricalPatterns.appeal.some(a => word.includes(a))) {
+        rhetoric.appeals++;
+      }
+    });
+
+    // Savollar
+    const sentences = text.split(/[.!?]+/);
+    rhetoric.questions = sentences.filter(s => 
+      rhetoricalPatterns.question.some(q => s.includes(q))
+    ).length;
+
+    return rhetoric;
+  };
+
+  // Semantik tahlil
+  const analyzeSemantics = (words) => {
+    const semantic = {
+      metaphors: 0,
+      symbols: 0,
+      abstract: 0,
+      concrete: 0
+    };
+
+    words.forEach(word => {
+      if (symbolicWords.metaphors.some(m => word.includes(m))) semantic.metaphors++;
+      if (symbolicWords.symbols.some(s => word.includes(s))) semantic.symbols++;
+    });
+
+    return semantic;
+  };
+
+  const analysis = useMemo(() => {
+    if (!text) return null;
+
+    const cleanedText = cleanText(text);
+    const allWords = cleanedText.split(' ').filter(w => w.length > 0);
+    
+    // Stop words ni olib tashlash
+    const words = allWords.filter(w => !stopWords.has(w));
+
+    if (words.length === 0) return null;
+
+    const unigrams = generateNGrams(words, 1);
+    const bigrams = generateNGrams(words, 2);
+    const trigrams = generateNGrams(words, 3);
+
+    const getTop = (ngrams, limit = 10) => {
+      return Object.entries(ngrams)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([phrase, count]) => ({ phrase, count }));
+    };
+
+    const topUnigrams = getTop(unigrams);
+    const topBigrams = getTop(bigrams);
+    const topTrigrams = getTop(trigrams);
+
+    // Hissiyot tahlili
+    const sentiment = analyzeSentiment(words);
+
+    // Frame tahlili
+    const framing = analyzeFraming(text, words);
+
+    // Ritorik tahlil
+    const rhetoric = analyzeRhetoric(text, words);
+
+    // Semantik tahlil
+    const semantics = analyzeSemantics(words);
+
+    // Statistika
+    const totalWords = words.length;
+    const uniqueWords = Object.keys(unigrams).length;
+    const lexicalDiversity = ((uniqueWords / totalWords) * 100).toFixed(1);
+
+    // Sentiment data
+    const sentimentData = [
+      { name: 'Ijobiy', value: sentiment.positive, color: '#10B981' },
+      { name: 'Salbiy', value: sentiment.negative, color: '#EF4444' },
+      { name: 'Neytral', value: sentiment.neutral, color: '#6B7280' }
+    ];
+
+    // Frame data
+    const frameData = [
+      { category: 'Iqtisodiy', value: framing.economic },
+      { category: 'Ijtimoiy', value: framing.social },
+      { category: 'Xavfsizlik', value: framing.security },
+      { category: 'Taraqqiyot', value: framing.progress }
+    ];
+
+    // Rhetoric data
+    const rhetoricData = [
+      { type: 'Murojaat', count: rhetoric.appeals },
+      { type: 'Savollar', count: rhetoric.questions }
+    ];
+
+    return {
+      topUnigrams,
+      topBigrams,
+      topTrigrams,
+      sentiment,
+      sentimentData,
+      framing,
+      frameData,
+      rhetoric,
+      rhetoricData,
+      semantics,
+      stats: {
+        totalWords,
+        uniqueWords,
+        lexicalDiversity,
+        sentences: text.split(/[.!?]+/).filter(s => s.trim().length > 0).length
+      }
+    };
+  }, [text]);
+
+  const handleAnalyze = () => {
+    if (text.trim()) {
+      setAnalyzed(true);
+      setActiveView('analysis');
+    }
+  };
+
+  const sampleText = `Hurmatli vatandoshlar! Bugun mamlakatimizning mustaqillik yo'lida erishgan yutuqlari haqida so'z yuritmoqchiman. Iqtisodiy taraqqiyotimiz barqaror rivojlanmoqda. Demokratik islohotlar amalga oshirilmoqda. Xalq farovonligi ortmoqda. Milliy manfaatlarimiz himoya qilinmoqda. Yoshlarimiz kelajagimizning poydevoridir. Ta'lim tizimimiz zamonaviy talablar asosida yangilanmoqda. Sog'liqni saqlash sohasida muhim qadam tashlanyapti. Xalqaro hamkorligimiz kengaymoqda. Investitsiya muhitimiz yaxshilanmoqda. Biz tinchlik tarafdorimiz.`;
+
+  const COLORS = ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#14B8A6'];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-blue-950 to-indigo-950 border-b-4 border-amber-500 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center">
+                <Target className="text-blue-950" size={32} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-white">Siyosiy Nutqlar Tahlil Tizimi</h1>
+                <p className="text-blue-200">Professional Matn Tahlil Platformasi</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="bg-blue-900/50 backdrop-blur-lg border-b border-blue-700">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex gap-2 py-4 flex-wrap">
+            {[
+              { id: 'home', label: 'Bosh sahifa', icon: <FileText size={20} /> },
+              { id: 'theory', label: 'Nazariya', icon: <BookOpen size={20} /> },
+              { id: 'analyzer', label: 'Amaliy tahlil', icon: <Search size={20} /> },
+              { id: 'analysis', label: 'Natijalar', icon: <TrendingUp size={20} />, disabled: !analyzed }
+            ].map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id)}
+                disabled={item.disabled}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                  activeView === item.id
+                    ? 'bg-amber-500 text-blue-950 shadow-lg'
+                    : 'bg-blue-800 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed'
+                }`}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto p-4 md:p-8">
+        {/* Home View */}
+        {activeView === 'home' && (
+          <div className="space-y-8">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl p-12 text-center shadow-2xl">
+              <h2 className="text-5xl font-bold text-blue-950 mb-4">Professional Tahlil Tizimi</h2>
+              <p className="text-2xl text-blue-900 mb-8">Siyosiy nutqlarni 6 usul bilan chuqur tahlil qiling</p>
+              <button
+                onClick={() => setActiveView('analyzer')}
+                className="px-12 py-4 bg-blue-950 text-white rounded-xl font-bold text-xl hover:bg-blue-900 transition-all shadow-lg"
+              >
+                Tahlilni boshlash
+              </button>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { title: 'N-gramma tahlili', desc: 'Chastotali so\'z tahlili', icon: <Zap />, color: 'blue' },
+                { title: 'Frame tahlili', desc: 'Voqealar tahlili', icon: <Target />, color: 'green' },
+                { title: 'Sentiment tahlili', desc: 'Hissiyot tahlili', icon: <Heart />, color: 'pink' },
+                { title: 'Semantik tahlil', desc: 'Ma\'no tahlili', icon: <MessageSquare />, color: 'purple' },
+                { title: 'Ritorik tahlil', desc: 'Murojaat tahlili', icon: <Lightbulb />, color: 'yellow' },
+                { title: 'Simvolik tahlil', desc: 'Metafora tahlili', icon: <Search />, color: 'indigo' }
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border-2 border-white/20 hover:border-amber-500 transition-all">
+                  <div className={`w-16 h-16 bg-${item.color}-500 rounded-full flex items-center justify-center mb-4 text-white`}>
+                    {item.icon}
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">{item.title}</h3>
+                  <p className="text-blue-200">{item.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Theory View */}
+        {activeView === 'theory' && (
+          <div className="space-y-6">
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border-2 border-white/20">
+              <h2 className="text-4xl font-bold text-white mb-6">Nazariy asoslar</h2>
+              
+              <div className="flex gap-4 mb-6 flex-wrap">
+                {[
+                  { id: 'ngram', label: 'N-gramma' },
+                  { id: 'frame', label: 'Frame' },
+                  { id: 'sentiment', label: 'Sentiment' },
+                  { id: 'semantic', label: 'Semantik' },
+                  { id: 'rhetoric', label: 'Ritorik' },
+                  { id: 'symbolic', label: 'Simvolik' }
+                ].map(item => (
+                  <button
+                    key={item.id}
+                    onClick={() => setActiveTheory(item.id)}
+                    className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+                      activeTheory === item.id
+                        ? 'bg-amber-500 text-blue-950'
+                        : 'bg-blue-800 text-white hover:bg-blue-700'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="bg-blue-900/50 rounded-xl p-6">
+                {activeTheory === 'ngram' && (
+                  <div className="text-white space-y-4">
+                    <h3 className="text-2xl font-bold text-amber-400">N-gramma (Chastotali) tahlili</h3>
+                    <p className="text-lg">Matnda so'zlarning takrorlanish chastotasini o'rganish usuli.</p>
+                    <div className="space-y-3">
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Unigram (1-gram)</h4>
+                        <p>Alohida so'zlarning tahlili. Nutqning asosiy mavzusini aniqlaydi.</p>
+                        <div className="mt-2 text-amber-300">Misol: "rivojlanish", "taraqqiyot", "mustaqillik"</div>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Bigram (2-gram)</h4>
+                        <p>Ikki so'zli birikmalar. So'zlar orasidagi aloqalarni ko'rsatadi.</p>
+                        <div className="mt-2 text-amber-300">Misol: "iqtisodiy taraqqiyot", "demokratik islohotlar"</div>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Trigram (3-gram)</h4>
+                        <p>Uch so'zli iboralar. To'liq kontekstni beradi.</p>
+                        <div className="mt-2 text-amber-300">Misol: "milliy manfaatlarimiz himoya", "xalq farovonligi ortmoqda"</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTheory === 'frame' && (
+                  <div className="text-white space-y-4">
+                    <h3 className="text-2xl font-bold text-amber-400">Frame (Ramka) tahlili</h3>
+                    <p className="text-lg">Matnda voqealar qanday taqdim etilishini tahlil qilish.</p>
+                    <div className="space-y-3">
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Iqtisodiy ramka</h4>
+                        <p>Muammolar iqtisodiy nuqtai nazardan ko'rib chiqiladi.</p>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Ijtimoiy ramka</h4>
+                        <p>Jamiyat manfaatlari asosida taqdim etiladi.</p>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Xavfsizlik ramkasi</h4>
+                        <p>Xavfsizlik choralarini ta'kidlaydi.</p>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Taraqqiyot ramkasi</h4>
+                        <p>Rivojlanish istiqbollarini ko'rsatadi.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTheory === 'sentiment' && (
+                  <div className="text-white space-y-4">
+                    <h3 className="text-2xl font-bold text-amber-400">Sentiment (Hissiyot) tahlili</h3>
+                    <p className="text-lg">Matn yozilgan hissiy ohangni aniqlash.</p>
+                    <div className="grid md:grid-cols-3 gap-4 mt-4">
+                      <div className="bg-green-500/20 border-2 border-green-500 p-4 rounded-lg">
+                        <Smile className="mb-2" size={32} />
+                        <h4 className="font-bold mb-2">Ijobiy</h4>
+                        <p className="text-sm">Muvaffaqiyat, yutuq, rivojlanish</p>
+                      </div>
+                      <div className="bg-red-500/20 border-2 border-red-500 p-4 rounded-lg">
+                        <Frown className="mb-2" size={32} />
+                        <h4 className="font-bold mb-2">Salbiy</h4>
+                        <p className="text-sm">Muammo, xavf, tanqid</p>
+                      </div>
+                      <div className="bg-gray-500/20 border-2 border-gray-500 p-4 rounded-lg">
+                        <Meh className="mb-2" size={32} />
+                        <h4 className="font-bold mb-2">Neytral</h4>
+                        <p className="text-sm">Faktlar, statistika, ta'rif</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTheory === 'semantic' && (
+                  <div className="text-white space-y-4">
+                    <h3 className="text-2xl font-bold text-amber-400">Semantik (Ma'no) tahlili</h3>
+                    <p className="text-lg">So'z iboralarning chuqur ma'nosini ochib berish.</p>
+                    <div className="space-y-3">
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Leksik ma'no</h4>
+                        <p>So'zning lug'aviy ma'nosi.</p>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Kontekstual ma'no</h4>
+                        <p>So'z gapda qanday ma'noda ishlatilgan.</p>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Konnotativ ma'no</h4>
+                        <p>So'zning yashirin, qo'shimcha ma'nosi.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTheory === 'rhetoric' && (
+                  <div className="text-white space-y-4">
+                    <h3 className="text-2xl font-bold text-amber-400">Ritorik tahlil</h3>
+                    <p className="text-lg">Nutqning ta'sirchanlik usullarini o'rganish.</p>
+                    <div className="space-y-3">
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Murojaat</h4>
+                        <p>Tinglovchilarga bevosita murojaat qilish.</p>
+                        <div className="mt-2 text-amber-300">Misol: "Hurmatli vatandoshlar", "Aziz do'stlar"</div>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Ritorik savollar</h4>
+                        <p>Javob talab qilmaydigan savollar.</p>
+                        <div className="mt-2 text-amber-300">Misol: "Biz nima uchun bu ishni qilmoqdamiz?"</div>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Takrorlash</h4>
+                        <p>Muhim fikrlarni ta'kidlash uchun takrorlash.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTheory === 'symbolic' && (
+                  <div className="text-white space-y-4">
+                    <h3 className="text-2xl font-bold text-amber-400">Simvolik tahlil</h3>
+                    <p className="text-lg">Metafora ramzlarning tahlili.</p>
+                    <div className="space-y-3">
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Metaforalar</h4>
+                        <p>O'xshatishlar orqali ma'no yetkazish.</p>
+                        <div className="mt-2 text-amber-300">Misol: "Mustaqillik yo'li", "Kelajak poydevori"</div>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Milliy ramzlar</h4>
+                        <p>Milliy qadriyatlarni ifodalovchi ramzlar.</p>
+                        <div className="mt-2 text-amber-300">Misol: "bayroq", "vatan", "mustaqillik"</div>
+                      </div>
+                      <div className="bg-blue-800/50 p-4 rounded-lg">
+                        <h4 className="font-bold mb-2">Tabiiy obrazlar</h4>
+                        <p>Tabiat elementlari orqali tasvirlash.</p>
+                        <div className="mt-2 text-amber-300">Misol: "quyosh", "daryo", "gullab-yashnash"</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analyzer View */}
+        {activeView === 'analyzer' && (
+          <div className="space-y-6">
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border-2 border-white/20">
+              <h2 className="text-3xl font-bold text-white mb-6">Matnni tahlil qilish</h2>
+              
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Tahlil qilmoqchi bo'lgan siyosiy nutq yoki matnni bu yerga kiriting..."
+                className="w-full h-64 p-4 bg-blue-900/50 border-2 border-blue-700 rounded-lg text-white placeholder-blue-300 focus:border-amber-500 focus:outline-none text-lg"
+              />
+              
+              <div className="mt-4 flex items-center justify-between flex-wrap gap-4">
+                <div className="text-white text-lg">
+                  So'zlar: <span className="font-bold text-amber-400">{text.trim() ? text.trim().split(/\s+/).length : 0}</span>
+                </div>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setText(sampleText)}
+                    className="px-6 py-3 bg-blue-700 text-white rounded-lg font-semibold hover:bg-blue-600 transition-all"
+                  >
+                    Namuna matn
+                  </button>
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={!text.trim()}
+                    className="px-8 py-3 bg-amber-500 text-blue-950 rounded-lg font-bold hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg flex items-center gap-2"
+                  >
+                    <Search size={20} />
+                    Tahlil qilish
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Analysis Results */}
+        {activeView === 'analysis' && analysis && (
+          <div className="space-y-6">
+            {/* Stats Cards */}
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-lg">
+                <div className="text-3xl font-bold text-white">{analysis.stats.totalWords}</div>
+                <div className="text-blue-100">Jami so'zlar</div>
+              </div>
+              <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 shadow-lg">
+                <div className="text-3xl font-bold text-white">{analysis.stats.uniqueWords}</div>
+                <div className="text-green-100">Noyob so'zlar</div>
+              </div>
+              <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 shadow-lg">
+                <div className="text-3xl font-bold text-white">{analysis.stats.sentences}</div>
+                <div className="text-purple-100">Jumlalar</div>
+              </div>
+              <div className="bg-gradient-to-br from-amber-500 to-orange-500 rounded-xl p-6 shadow-lg">
+                <div className="text-3xl font-bold text-white">{analysis.stats.lexicalDiversity}%</div>
+                <div className="text-amber-100">Lug'at boyligi</div>
+              </div>
+            </div>
+
+            {/* N-gram Analysis */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border-2 border-white/20">
+              <h2 className="text-3xl font-bold text-white mb-6">📊 N-gramma tahlili</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="bg-blue-900/50 rounded-lg p-4">
+                  <h3 className="text-xl font-bold text-amber-400 mb-4">Unigram (1-gram)</h3>
+                  <div className="space-y-2">
+                    {analysis.topUnigrams.slice(0, 5).map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-white">
+                        <span>{item.phrase}</span>
+                        <span className="bg-blue-700 px-3 py-1 rounded-full text-sm font-bold">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-green-900/50 rounded-lg p-4">
+                  <h3 className="text-xl font-bold text-amber-400 mb-4">Bigram (2-gram)</h3>
+                  <div className="space-y-2">
+                    {analysis.topBigrams.slice(0, 5).map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-white">
+                        <span className="text-sm">{item.phrase}</span>
+                        <span className="bg-green-700 px-3 py-1 rounded-full text-sm font-bold">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="bg-purple-900/50 rounded-lg p-4">
+                  <h3 className="text-xl font-bold text-amber-400 mb-4">Trigram (3-gram)</h3>
+                  <div className="space-y-2">
+                    {analysis.topTrigrams.slice(0, 5).map((item, idx) => (
+                      <div key={idx} className="flex justify-between items-center text-white">
+                        <span className="text-sm">{item.phrase}</span>
+                        <span className="bg-purple-700 px-3 py-1 rounded-full text-sm font-bold">{item.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sentiment Analysis */}
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border-2 border-white/20">
+                <h2 className="text-2xl font-bold text-white mb-6">💭 Sentiment tahlili</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={analysis.sentimentData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, value }) => `${name}: ${value}%`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                    >
+                      {analysis.sentimentData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="grid grid-cols-3 gap-2 mt-4">
+                  <div className="bg-green-500/20 border border-green-500 rounded p-2 text-center">
+                    <div className="text-white font-bold">{analysis.sentiment.counts.positive}</div>
+                    <div className="text-green-300 text-sm">Ijobiy</div>
+                  </div>
+                  <div className="bg-red-500/20 border border-red-500 rounded p-2 text-center">
+                    <div className="text-white font-bold">{analysis.sentiment.counts.negative}</div>
+                    <div className="text-red-300 text-sm">Salbiy</div>
+                  </div>
+                  <div className="bg-gray-500/20 border border-gray-500 rounded p-2 text-center">
+                    <div className="text-white font-bold">{analysis.sentiment.counts.neutral}</div>
+                    <div className="text-gray-300 text-sm">Neytral</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border-2 border-white/20">
+                <h2 className="text-2xl font-bold text-white mb-6">🎯 Frame tahlili</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <RadarChart data={analysis.frameData}>
+                    <PolarGrid stroke="#fff" />
+                    <PolarAngleAxis dataKey="category" stroke="#fff" />
+                    <PolarRadiusAxis stroke="#fff" />
+                    <Radar name="Chastota" dataKey="value" stroke="#F59E0B" fill="#F59E0B" fillOpacity={0.6} />
+                    <Tooltip />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Rhetoric Analysis */}
+            <div className="bg-white/10 backdrop-blur-lg rounded-xl p-8 border-2 border-white/20">
+              <h2 className="text-2xl font-bold text-white mb-6">🎤 Ritorik tahlil</h2>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div className="bg-blue-900/50 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <Heart className="text-amber-400" size={32} />
+                    <div>
+                      <div className="text-3xl font-bold text-white">{analysis.rhetoric.appeals}</div>
+                      <div className="text-blue-200">Murojaat elementlari</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-blue-300">Tinglovchilarga bevosita murojaat qilish</p>
+                </div>
+                <div className="bg-purple-900/50 rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <MessageSquare className="text-amber-400" size={32} />
+                    <div>
+                      <div className="text-3xl font-bold text-white">{analysis.rhetoric.questions}</div>
+                      <div className="text-purple-200">Ritorik savollar</div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-purple-300">Ta'sirni kuchaytiruvchi savollar</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Key Findings */}
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 rounded-xl p-8 shadow-2xl">
+              <h2 className="text-3xl font-bold text-blue-950 mb-6">💡 Asosiy xulosalar</h2>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="bg-blue-950/80 rounded-lg p-4 text-white">
+                  <div className="text-2xl mb-2">🎯</div>
+                  <h3 className="font-bold mb-2">Nutq fokusi</h3>
+                  <p className="text-sm text-blue-200">Eng muhim: <span className="font-bold text-amber-300">{analysis.topUnigrams[0]?.phrase}</span></p>
+                </div>
+                <div className="bg-blue-950/80 rounded-lg p-4 text-white">
+                  <div className="text-2xl mb-2">💭</div>
+                  <h3 className="font-bold mb-2">Umumiy ohang</h3>
+                  <p className="text-sm text-blue-200">
+                    {analysis.sentiment.positive > 50 ? 'Ijobiy' : analysis.sentiment.negative > 30 ? 'Tanqidiy' : 'Muvozanatli'}
+                    <span className="font-bold text-amber-300"> ({analysis.sentiment.positive}% ijobiy)</span>
+                  </p>
+                </div>
+                <div className="bg-blue-950/80 rounded-lg p-4 text-white">
+                  <div className="text-2xl mb-2">📊</div>
+                  <h3 className="font-bold mb-2">Asosiy yo'nalish</h3>
+                  <p className="text-sm text-blue-200">
+                    {Object.entries(analysis.framing).sort((a, b) => b[1] - a[1])[0][0] === 'economic' ? 'Iqtisodiy' :
+                     Object.entries(analysis.framing).sort((a, b) => b[1] - a[1])[0][0] === 'social' ? 'Ijtimoiy' :
+                     Object.entries(analysis.framing).sort((a, b) => b[1] - a[1])[0][0] === 'security' ? 'Xavfsizlik' : 'Taraqqiyot'}
+                    <span className="font-bold text-amber-300"> ramka</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="bg-blue-950 border-t-4 border-amber-500 text-white py-8 px-4 mt-16">
+        <div className="max-w-7xl mx-auto text-center">
+          <p className="text-xl mb-2 font-bold">Siyosiy Nutqlar Tahlil Tizimi</p>
+          <p className="text-blue-300">Professional matn tahlil platformasi - 6 usul asosida</p>
+          <div className="mt-4 text-amber-400 text-sm">
+            N-gramma • Frame • Sentiment • Semantik • Ritorik • Simvolik
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PoliticalTextAnalyzer;
